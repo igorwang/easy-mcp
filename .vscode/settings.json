@@ -1,0 +1,19 @@
+{
+    // Tell Python extension to treat the src directory as an additional top-level package path
+    "python.analysis.extraPaths": [
+      "${workspaceFolder}/src"
+    ],
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
+  "python.terminal.activateEnvironment": true,
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit",
+        "source.fixAll": "explicit",
+        "source.unusedImports": "explicit",
+    },
+  },
+  "flake8.args": ["--disable=C0111", "--max-line-length=120"]
+  }
+  
