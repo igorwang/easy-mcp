@@ -15,6 +15,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # 2. Create the FastMCP instance
 main_mcp = FastMCP()
 
+TOOL_SEPARATOR = os.getenv("TOOL_SEPARATOR", "__")
+
 
 async def setup_servers():
     # 3. Define an async setup function to load & mount your servers_config.json
@@ -28,29 +30,31 @@ async def setup_servers():
         # NPX-based transport
         if value.get("command") == "npx":
             pkg = value["args"][1]
-            raw_args = value["args"][1:] if len(value["args"]) > 1 else None
+            raw_args = value["args"][2:] if len(value["args"]) > 2 else None
             transport = NpxStdioTransport(
                 package=pkg,
-                # args=raw_args,
-                # env_vars=value.get("env", None),
+                args=raw_args,
+                env_vars=value.get("env", None),
             )
             client = Client(transport)
             server_mcp = FastMCP.from_client(client)
-            main_mcp.mount(key, server_mcp)
+            main_mcp.mount(key, server_mcp, tool_separator=TOOL_SEPARATOR)
         # UVX-based transport
         elif value.get("command") == "uvx":
             tool = value["args"][0]
             raw_args = value["args"][1:] if len(value["args"]) > 1 else None
             transport = UvxStdioTransport(tool_name=tool, tool_args=None)
             client = Client(transport)
-            # server_mcp = FastMCP.from_client(client)
-            main_mcp.mount(key, server_mcp)
+            server_mcp = FastMCP.from_client(client)
+            main_mcp.mount(key, server_mcp, tool_separator=TOOL_SEPARATOR)
 
         # HTTP proxy transport
         elif value.get("url"):
             client = Client(value["url"])
             server_mcp = FastMCP.from_client(client)
-            main_mcp.mount(key, server_mcp, as_proxy=True)
+            main_mcp.mount(
+                key, server_mcp, as_proxy=True, tool_separator=TOOL_SEPARATOR
+            )
         else:
             raise ValueError(f"Invalid server config for {key}: {value}")
 
@@ -68,6 +72,3 @@ if __name__ == "__main__":
     log_level = os.getenv("LOG_LEVEL", "INFO").lower()
 
     main_mcp.run(transport=transport, host=host, port=port, log_level=log_level)
-
-    # This call creates the TaskGroup *before* handling any requests, so
-    # by the time setup_mcp_servers() runs, all internals are ready.
